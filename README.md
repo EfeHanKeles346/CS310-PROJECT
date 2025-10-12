@@ -1,85 +1,40 @@
-# 🧠 PhysiAI — Your Personal AI Fitness Coach
+PhysiAI
 
-**PhysiAI** is a next-generation **personal fitness and nutrition app** that uses your **real body measurements** to create a **customized training and meal program** — fully personalized, adaptive, and powered by AI.
+A mobile application for personalized AI-based fitness and nutrition coaching.
 
-This isn’t just another gym tracker.  
-PhysiAI works like a **digital personal trainer**, adjusting every detail of your fitness plan based on your body’s real progress.
+The Problem
 
----
+Many individuals struggle to achieve consistent progress in their fitness journeys because traditional workout and nutrition apps fail to adapt to their unique bodies.
+Most apps provide one-size-fits-all plans that don’t consider personal differences in metabolism, recovery rate, and response to specific foods.
+As a result, users often lose motivation, follow ineffective routines, and fail to see sustainable results.
 
-## ⚙️ What PhysiAI Does
+Our Solution
 
-### 🧍 Measurement-Based Personalization
-- Start by uploading your **body measurement report** (from MACFit, a dietitian, or any scanner).  
-- PhysiAI builds your **digital body profile** — analyzing your muscle, fat, and proportions.  
-- This profile becomes the base for your **individual training and meal plan**.
+PhysiAI introduces an intelligent, fully personalized mobile fitness platform that uses real body measurements to create adaptive training and meal programs.
+The system learns from user progress every 2–4 weeks and automatically updates workouts or diet plans — acting as a digital personal trainer and nutritionist combined.
+It continuously analyzes the user’s progress and automatically adjusts their plan.
 
----
+By integrating measurement-based personalization, AI-driven updates, and offline accessibility, PhysiAI creates a powerful ecosystem for anyone who wants to take control of their health and fitness journey.
 
-### 🧠 AI Adaptive Training
-- PhysiAI continuously learns from your updates.  
-- Every 2–4 weeks, it analyzes your progress and **automatically changes your program** if your body isn’t responding.  
-- Example: If rice doesn’t help you lose weight, the system switches to a bulgur wheat-based diet plan.  
-- The app acts as a **real coach** that adapts training and nutrition for your unique body response.
+Features
 
----
+Measurement-Based Personalization: Upload real body data from gym scanners, dietitians, or reports to generate a unique digital body profile.
 
-### 🍳 Advanced Calorie & Meal Tracker
-- Select your foods manually — **no photo or barcode scanning**.  
-- Choose from a **large database** built from nutritionist data, verified internet sources, and user input.  
-- Each item shows **average calories**, **protein**, **carbs**, and **fat**.  
-- You can:
-  - Add your own foods.  
-  - Modify values anytime.  
-  - For example, if you think your egg has 700 kcal — type it, save it, done.  
-- PhysiAI tracks total daily intake and automatically adjusts meal recommendations based on your data.
+AI Adaptive Training: The system learns from user progress every 2–4 weeks and updates workouts or diet plans automatically.
 
----
+Custom Nutrition Planning: Smart food tracking with editable calorie, protein, carb, and fat values — no barcode or photo scanning needed.
 
-### 🗓️ Smart Planner & Lifestyle Integration
-- A simple weekly calendar that connects:
-  - Meals  
-  - Workouts  
-  - Sleep  
-  - Vitamins & minerals  
-- Your habits directly shape your plan.  
-  - Poor sleep? → Recovery day added.  
-  - High calories + good sleep? → Power workout assigned.  
+Smart Lifestyle Integration: Weekly planner connects workouts, meals, sleep, and supplements to optimize recovery and performance.
 
----
+Offline Functionality: PhysiAI works without an internet connection, ensuring accessibility anywhere.
 
-### 📈 Progress Tracking
-- Update your measurements weekly or bi-weekly.  
-- PhysiAI compares results, updates your **digital body**, and fine-tunes your workout and meal plan.  
-- You can literally **see your body’s evolution** on screen.
+Progress Visualization: Users can view their body evolution through continuous digital updates and metrics.
 
----
-
-## 🔍 Why PhysiAI Is Different
-
-| Feature | PhysiAI | Regular Fitness App |
-|----------|----------|----------------------|
-| Uses real body measurement data | ✅ | ❌ |
-| Automatically adapts to your progress | ✅ | ❌ |
-| Manual + editable food tracking | ✅ | ❌ |
-| Works fully offline | ✅ | ❌ |
-| Adjusts diet based on individual response | ✅ | ❌ |
-| Generic one-size-fits-all programs | ❌ | ✅ |
-
----
-
-## 💡 In Short
-
-PhysiAI gives you:
-- A **personalized AI-generated fitness & meal plan**  
-- A **real digital representation** of your body  
-- Continuous **adaptation** based on results  
-- Full **control** over your nutrition data  
-- A complete **offline experience**  
-
-It’s like having your own **AI personal trainer**, built into your phone —  
-one that actually understands how *your* body works.
-
----
-
-**PhysiAI — Your body, your data, your progress.**
+Team Members
+Name	Student ID
+Alihan Bulut	32151
+Orkun Kağan Yücel	31915
+Mehmet Ege Aşan	34101
+Efe Han Keleş	31994
+Arda Belli	34136
+Ömer Faruk Orhan	31939
