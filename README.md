@@ -1,4 +1,4 @@
-# 🧠 PhysiAI
+# 🧠 FitMind
 
 A mobile application for personalized, offline fitness and nutrition tracking based on real body measurements.
 
@@ -13,7 +13,7 @@ As a result, users struggle to stay consistent and often fail to see real progre
 
 ## 💡 Our Solution
 
-**PhysiAI** creates a truly personalized experience by using real body measurement data (from gyms or dietitians) to build custom workout and meal plans.  
+**FitMind** creates a truly personalized experience by using real body measurement data (from gyms or dietitians) to build custom workout and meal plans.  
 Every 2–4 weeks, the system checks user progress and updates their plan accordingly — all without requiring an internet connection.  
 This allows users to track fitness, nutrition, and body composition in one private, adaptive environment.
 
