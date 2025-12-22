@@ -46,7 +46,7 @@ class Exercise {
   }
 }
 
-// Workout session tracking - kullanıcının yaptığı set ve kilo kayıtları
+// Workout session tracking - user's set and weight records
 class ExerciseSet {
   int setNumber;
   double? weight; // kg

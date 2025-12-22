@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../routes.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_spacing.dart';
@@ -7,6 +8,7 @@ import '../../models/user_data.dart';
 import '../../services/user_data_service.dart';
 import '../../services/calculation_service.dart';
 import '../../services/workout_program_service.dart';
+import '../../providers/auth_provider.dart'; // Step 3: Provider for Firebase Auth
 
 class RegisterStep3Screen extends StatefulWidget {
   const RegisterStep3Screen({super.key});
@@ -64,9 +66,30 @@ class _RegisterStep3ScreenState extends State<RegisterStep3Screen> {
     });
   }
   
-  Future<void> _saveUserData() async {
-    if (_userData == null) return;
+  /// Step 3: Save user data and register with Firebase Authentication
+  Future<bool> _saveUserData(BuildContext context) async {
+    if (_userData == null) return false;
     
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Step 3: Sign up with Firebase Authentication
+    bool success = await authProvider.signUp(
+      email: _userData!['email'] ?? '',
+      password: _userData!['password'] ?? '',
+      displayName: _userData!['name'] ?? '',
+      age: _userData!['age'],
+      gender: _userData!['gender'],
+      height: _userData!['height']?.toDouble(),
+      weight: _userData!['weight']?.toDouble(),
+      fitnessGoal: _userData!['primaryGoal'],
+      activityLevel: _userData!['trainingExperience'],
+    );
+    
+    if (!success) {
+      return false;
+    }
+    
+    // Also save to local storage for offline access
     double currentWeight = _userData!['weight']?.toDouble() ?? 0.0;
     
     UserData finalUserData = UserData(
@@ -74,7 +97,7 @@ class _RegisterStep3ScreenState extends State<RegisterStep3Screen> {
       age: _userData!['age'] ?? 0,
       height: _userData!['height']?.toDouble() ?? 0.0,
       weight: currentWeight,
-      initialWeight: currentWeight, // Set initial weight for progress tracking
+      initialWeight: currentWeight,
       gender: _userData!['gender'] ?? 'Male',
       primaryGoal: _userData!['primaryGoal'] ?? 'lose_weight',
       targetWeight: _userData!['targetWeight']?.toDouble(),
@@ -88,9 +111,9 @@ class _RegisterStep3ScreenState extends State<RegisterStep3Screen> {
     );
     
     await _userDataService.saveUserData(finalUserData);
-    
-    // Generate workout program based on user data
     await _workoutProgramService.generateAndSaveProgram(finalUserData);
+    
+    return true;
   }
 
   @override
@@ -196,29 +219,69 @@ class _RegisterStep3ScreenState extends State<RegisterStep3Screen> {
               ),
               
               const SizedBox(height: 32),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Back'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        await _saveUserData();
-                        if (mounted) {
-                          Navigator.pushNamedAndRemoveUntil(
-                            context, AppRoutes.mainScaffold, (route) => false);
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.green500),
-                      child: const Text('Calculate My Program'),
-                    ),
-                  ),
-                ],
+              // Step 3: Register button with loading state from Provider
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, _) {
+                  return Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: authProvider.isLoading ? null : () => Navigator.pop(context),
+                          child: const Text('Back'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: authProvider.isLoading
+                              ? null
+                              : () async {
+                                  bool success = await _saveUserData(context);
+                                  if (!mounted) return;
+                                  
+                                  if (success) {
+                                    // Step 3: Registration successful
+                                    Navigator.pushNamedAndRemoveUntil(
+                                      context, AppRoutes.mainScaffold, (route) => false);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('Welcome to FitMind!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else {
+                                    // Step 3: Show error message
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Registration Failed'),
+                                        content: Text(authProvider.errorMessage ?? 'An error occurred'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.green500),
+                          child: authProvider.isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text('Calculate My Program'),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),

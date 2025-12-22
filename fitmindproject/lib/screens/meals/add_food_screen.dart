@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_spacing.dart';
 import '../../utils/app_text_styles.dart';
 import '../../services/food_database_service.dart';
-import '../../services/meal_tracking_service.dart';
+import '../../services/firestore_service.dart';
 import '../../models/food_model.dart';
+import '../../models/meal_log_model.dart' show MealLogModel;
+import '../../providers/auth_provider.dart';
 
 class AddFoodScreen extends StatefulWidget {
   const AddFoodScreen({super.key});
@@ -19,10 +22,11 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
   String? _selectedMealType; // Breakfast, Lunch, Dinner, Snacks
   
   final FoodDatabaseService _foodDatabase = FoodDatabaseService();
-  final MealTrackingService _mealService = MealTrackingService();
+  final FirestoreService _firestoreService = FirestoreService();
   
   List<FoodItem> _filteredFoods = [];
   Set<String> _selectedFoodIds = {}; // Track selected foods
+  bool _isLoading = false;
   
   @override
   void didChangeDependencies() {
@@ -66,6 +70,21 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
       Navigator.pop(context);
       return;
     }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
+    
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to add foods'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    setState(() => _isLoading = true);
     
     final selectedFoods = _filteredFoods.where(
       (food) => _selectedFoodIds.contains(food.id),
@@ -74,31 +93,47 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
     // Default meal type to Breakfast if not specified
     final mealType = _selectedMealType ?? 'Breakfast';
     
-    for (var food in selectedFoods) {
-      final entry = MealEntry(
-        id: DateTime.now().millisecondsSinceEpoch.toString() + food.id,
-        foodId: food.id,
-        foodName: food.name,
-        mealType: mealType,
-        quantity: food.servingSize,
-        calories: food.calories,
-        protein: food.protein,
-        carbs: food.carbs,
-        fats: food.fats,
-        date: DateTime.now(),
-      );
+    try {
+      for (var food in selectedFoods) {
+        // Step 3: Create MealLogModel for Firestore
+        final mealLog = MealLogModel(
+          id: DateTime.now().millisecondsSinceEpoch.toString() + food.id,
+          mealName: food.name,
+          mealType: mealType,
+          calories: food.calories,
+          protein: food.protein,
+          carbs: food.carbs,
+          fats: food.fats,
+          createdBy: userId, // Step 3 requirement
+          createdAt: DateTime.now(), // Step 3 requirement
+        );
+        
+        // Step 3: Save to Firestore (CREATE operation)
+        await _firestoreService.addMealLog(mealLog);
+      }
       
-      await _mealService.addMealEntry(entry);
-    }
-    
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Added ${selectedFoods.length} food item(s) to $mealType'),
-          backgroundColor: AppColors.green500,
-        ),
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Added ${selectedFoods.length} food item(s) to $mealType'),
+            backgroundColor: AppColors.green500,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error adding food: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -114,8 +149,14 @@ class _AddFoodScreenState extends State<AddFoodScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: _saveSelectedFoods,
-            child: const Text('Save'),
+            onPressed: _isLoading ? null : _saveSelectedFoods,
+            child: _isLoading 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
           ),
         ],
       ),

@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_spacing.dart';
 import '../../utils/app_text_styles.dart';
 import '../../services/user_data_service.dart';
+import '../../services/firestore_service.dart';
+import '../../models/measurement_model.dart';
+import '../../providers/auth_provider.dart';
 
 class AddMeasurementScreen extends StatefulWidget {
   const AddMeasurementScreen({super.key});
@@ -20,9 +24,26 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
   final _chestController = TextEditingController();
   final _armsController = TextEditingController();
   final UserDataService _userDataService = UserDataService();
+  final FirestoreService _firestoreService = FirestoreService();
+  bool _isLoading = false;
 
   Future<void> _saveMeasurement() async {
     if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.uid;
+    
+    if (userId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please log in to save measurements.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
       return;
     }
 
@@ -45,6 +66,15 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
     final muscleMass = _muscleMassController.text.isNotEmpty 
         ? double.tryParse(_muscleMassController.text) 
         : null;
+    final waist = _waistController.text.isNotEmpty 
+        ? double.tryParse(_waistController.text) 
+        : null;
+    final chest = _chestController.text.isNotEmpty 
+        ? double.tryParse(_chestController.text) 
+        : null;
+    final arms = _armsController.text.isNotEmpty 
+        ? double.tryParse(_armsController.text) 
+        : null;
 
     if (weight == null || bodyFat == null) {
       if (mounted) {
@@ -58,23 +88,59 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
       return;
     }
 
-    // Update user data with new measurements
-    final updatedData = userData.copyWith(
-      weight: weight,
-      bodyFatPercentage: bodyFat,
-      muscleMass: muscleMass,
-    );
+    setState(() => _isLoading = true);
 
-    await _userDataService.updateUserData(updatedData);
-
-    if (mounted) {
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Measurement saved successfully!'),
-          backgroundColor: Colors.green,
-        ),
+    try {
+      // Step 3: Create measurement model for Firestore
+      final measurement = MeasurementModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        weight: weight,
+        bodyFat: bodyFat,
+        muscleMass: muscleMass,
+        waist: waist,
+        chest: chest,
+        arms: arms,
+        createdBy: userId,
+        createdAt: DateTime.now(),
       );
+
+      debugPrint('Saving measurement to Firestore: weight=$weight, userId=$userId');
+      
+      // Step 3: Save to Firestore (CREATE operation)
+      await _firestoreService.addMeasurement(measurement);
+      
+      debugPrint('Measurement saved successfully to Firestore!');
+
+      // Also update local SharedPreferences for offline access
+      final updatedData = userData.copyWith(
+        weight: weight,
+        bodyFatPercentage: bodyFat,
+        muscleMass: muscleMass,
+      );
+      await _userDataService.updateUserData(updatedData);
+
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Measurement saved to cloud!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error saving measurement: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -91,8 +157,14 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
         leadingWidth: 80,
         actions: [
           TextButton(
-            onPressed: _saveMeasurement,
-            child: const Text('Save'),
+            onPressed: _isLoading ? null : _saveMeasurement,
+            child: _isLoading 
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
           ),
         ],
       ),
@@ -198,8 +270,24 @@ class _AddMeasurementScreenState extends State<AddMeasurementScreen> {
               
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _saveMeasurement,
-                child: const Text('Save Measurement'),
+                onPressed: _isLoading ? null : _saveMeasurement,
+                child: _isLoading 
+                  ? const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        ),
+                        SizedBox(width: 12),
+                        Text('Saving...'),
+                      ],
+                    )
+                  : const Text('Save Measurement'),
               ),
             ],
           ),

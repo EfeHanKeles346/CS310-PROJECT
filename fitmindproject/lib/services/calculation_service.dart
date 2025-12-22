@@ -7,10 +7,10 @@ class CalculationService {
     bool isMale = user.gender == 'Male';
     
     if (isMale) {
-      // Erkek: BMR = 10 * kilo_kg + 6.25 * boy_cm - 5 * yaş + 5
+      // Male: BMR = 10 * weight_kg + 6.25 * height_cm - 5 * age + 5
       return 10 * user.weight + 6.25 * user.height - 5 * user.age + 5;
     } else {
-      // Kadın: BMR = 10 * kilo_kg + 6.25 * boy_cm - 5 * yaş - 161
+      // Female: BMR = 10 * weight_kg + 6.25 * height_cm - 5 * age - 161
       return 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
     }
   }
@@ -19,13 +19,13 @@ class CalculationService {
   static double getActivityFactor(String trainingExperience) {
     switch (trainingExperience) {
       case 'beginner':
-        return 1.375; // Hafif aktif
+        return 1.375; // Lightly active
       case 'intermediate':
-        return 1.55;  // Orta aktif
+        return 1.55;  // Moderately active
       case 'advanced':
-        return 1.725; // Çok aktif
+        return 1.725; // Very active
       default:
-        return 1.2;   // Sedanter (default)
+        return 1.2;   // Sedentary (default)
     }
   }
   

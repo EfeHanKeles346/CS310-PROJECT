@@ -14,10 +14,13 @@ class RegisterStep1Screen extends StatefulWidget {
 class _RegisterStep1ScreenState extends State<RegisterStep1Screen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController(); // Step 3: Email for Firebase Auth
+  final _passwordController = TextEditingController(); // Step 3: Password for Firebase Auth
   final _ageController = TextEditingController();
   final _heightController = TextEditingController();
   final _weightController = TextEditingController();
   String _selectedGender = 'Male';
+  bool _isPasswordVisible = false; // For password visibility toggle
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +74,60 @@ class _RegisterStep1ScreenState extends State<RegisterStep1Screen> {
                     // Check if name contains only letters and spaces
                     if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(value)) {
                       return 'Name should only contain letters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.spacing20),
+                
+                // Email (Step 3: Required for Firebase Authentication)
+                Text('Email', style: AppTextStyles.formLabel),
+                const SizedBox(height: AppSpacing.spacing8),
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter your email',
+                    prefixIcon: Icon(Icons.email_outlined),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your email';
+                    }
+                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: AppSpacing.spacing20),
+                
+                // Password (Step 3: Required for Firebase Authentication)
+                Text('Password', style: AppTextStyles.formLabel),
+                const SizedBox(height: AppSpacing.spacing8),
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: !_isPasswordVisible,
+                  decoration: InputDecoration(
+                    hintText: 'Enter your password',
+                    prefixIcon: const Icon(Icons.lock_outline),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter your password';
+                    }
+                    if (value.length < 6) {
+                      return 'Password must be at least 6 characters';
                     }
                     return null;
                   },
@@ -180,12 +237,14 @@ class _RegisterStep1ScreenState extends State<RegisterStep1Screen> {
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // Pass data to next screen via arguments
+                      // Pass data to next screen via arguments (Step 3: Include email & password)
                       Navigator.pushNamed(
                         context, 
                         AppRoutes.register2,
                         arguments: {
                           'name': _nameController.text,
+                          'email': _emailController.text.trim(), // Step 3: Email for Firebase
+                          'password': _passwordController.text, // Step 3: Password for Firebase
                           'age': int.parse(_ageController.text),
                           'height': double.parse(_heightController.text),
                           'weight': double.parse(_weightController.text),
@@ -227,6 +286,8 @@ class _RegisterStep1ScreenState extends State<RegisterStep1Screen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose(); // Step 3
+    _passwordController.dispose(); // Step 3
     _ageController.dispose();
     _heightController.dispose();
     _weightController.dispose();

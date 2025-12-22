@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 import '../../routes.dart';
 import '../../utils/app_colors.dart';
 import '../../utils/app_spacing.dart';
@@ -7,6 +8,8 @@ import '../../utils/app_text_styles.dart';
 import '../../utils/app_radius.dart';
 import '../../services/user_data_service.dart';
 import '../../services/calculation_service.dart';
+import '../../services/firestore_service.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onNavigateToPlanner;
@@ -19,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final UserDataService _userDataService = UserDataService();
+  final FirestoreService _firestoreService = FirestoreService();
 
   @override
   void initState() {
@@ -36,17 +40,29 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onUserDataChanged() {
     setState(() {});
   }
+  
+  // Step 3 Requirement: Load statistics from Firestore
+  Future<Map<String, dynamic>> _loadStatistics(String userId) async {
+    final totalWorkouts = await _firestoreService.getTotalWorkoutsCount(userId);
+    final totalCalories = await _firestoreService.getTotalCaloriesBurned(userId);
+    return {
+      'totalWorkouts': totalWorkouts,
+      'totalCalories': totalCalories,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final userData = _userDataService.userData;
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userId = authProvider.user?.uid;
     
     // Debug: Print user data to verify it's loading correctly
     if (userData != null) {
       debugPrint('HomeScreen - Weight: ${userData.weight}kg, Initial: ${userData.initialWeight}kg, Target: ${userData.targetWeight}kg, Goal: ${userData.primaryGoal}');
     }
     
-    if (userData == null) {
+    if (userData == null || userId == null) {
       return Scaffold(
         backgroundColor: AppColors.gray100,
         appBar: AppBar(
@@ -100,25 +116,88 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Current Stats Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildStatItem('Weight', '${userData.weight.toStringAsFixed(1)} kg'),
-                    _buildStatItem('Body Fat', 
-                      userData.bodyFatPercentage != null 
-                        ? '${userData.bodyFatPercentage!.toStringAsFixed(1)}%' 
-                        : 'N/A'),
-                    _buildStatItem('Muscle', 
-                      userData.muscleMass != null 
-                        ? '${userData.muscleMass!.toStringAsFixed(1)} kg' 
-                        : 'N/A'),
-                  ],
-                ),
-              ),
+            // Step 3 Requirement: FutureBuilder for loading statistics with loading/error states
+            FutureBuilder<Map<String, dynamic>>(
+              future: _loadStatistics(userId),
+              builder: (context, snapshot) {
+                // Loading state
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            CircularProgressIndicator(
+                              color: AppColors.blue500,
+                              strokeWidth: 2,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Loading statistics...',
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.mutedText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                
+                // Error state
+                if (snapshot.hasError) {
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                      child: Column(
+                        children: [
+                          Icon(Icons.error_outline, color: AppColors.red500, size: 32),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Error loading statistics',
+                            style: AppTextStyles.caption.copyWith(
+                              color: AppColors.red500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () => setState(() {}),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                // Success state
+                final stats = snapshot.data ?? {};
+                final totalWorkouts = stats['totalWorkouts'] ?? 0;
+                final totalCalories = stats['totalCalories'] ?? 0;
+                
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Your Stats', style: AppTextStyles.subtitle),
+                        const SizedBox(height: 16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            _buildStatItem('Weight', '${userData.weight.toStringAsFixed(1)} kg'),
+                            _buildStatItem('Workouts', '$totalWorkouts'),
+                            _buildStatItem('Calories', '${totalCalories}'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: AppSpacing.spacing16),
             
