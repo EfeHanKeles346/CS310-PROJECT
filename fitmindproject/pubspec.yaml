@@ -1,0 +1,57 @@
+name: fitmind_app
+description: Offline fitness and nutrition tracking app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  cupertino_icons: ^1.0.6
+  shared_preferences: ^2.2.2
+  
+  # Firebase Core (required for all Firebase apps)
+  # Updated for Xcode 16.2 / iOS 18.2 compatibility
+  firebase_core: ^3.0.0
+  
+  # Firebase Authentication (Step 3 requirement)
+  firebase_auth: ^5.0.0
+  
+  # Cloud Firestore (Step 3 requirement)
+  cloud_firestore: ^5.0.0
+  
+  # Provider State Management (Step 3 requirement)
+  provider: ^6.1.1
+  
+  # Helper packages
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Assets
+  assets:
+    - assets/images/
+  
+  # Custom fonts - Poppins font family (Phase 2.2 requirement)
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Poppins/Poppins-Light.ttf
+          weight: 300

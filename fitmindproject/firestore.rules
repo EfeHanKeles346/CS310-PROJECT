@@ -1,0 +1,116 @@
+rules_version = '2';
+
+// Step 3 Requirement: Firestore Security Rules
+// Prevent unauthenticated reads/writes and restrict access to user's own data
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // ==================== USERS COLLECTION ====================
+    // Users can only read and write their own profile data
+    match /users/{userId} {
+      // Allow read if user is signed in and requesting their own data
+      allow read: if isSignedIn() && isOwner(userId);
+      
+      // Allow create if user is signing up (creating their own profile)
+      allow create: if isSignedIn() && isOwner(userId);
+      
+      // Allow update only if user is updating their own profile
+      allow update: if isSignedIn() && isOwner(userId);
+      
+      // Allow delete only if user is deleting their own profile
+      allow delete: if isSignedIn() && isOwner(userId);
+    }
+    
+    // ==================== WORKOUT LOGS COLLECTION ====================
+    // Users can only access their own workout logs
+    match /workout_logs/{workoutId} {
+      // Allow read if user owns the workout
+      allow read: if isSignedIn() && 
+                     resource.data.createdBy == request.auth.uid;
+      
+      // Allow create if user is authenticated and sets themselves as creator
+      allow create: if isSignedIn() && 
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.id is string &&
+                       request.resource.data.workoutName is string &&
+                       request.resource.data.createdAt is timestamp;
+      
+      // Allow update only if user owns the workout
+      allow update: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Allow delete only if user owns the workout
+      allow delete: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid;
+    }
+    
+    // ==================== MEAL LOGS COLLECTION ====================
+    // Users can only access their own meal logs
+    match /meal_logs/{mealId} {
+      // Allow read if user owns the meal
+      allow read: if isSignedIn() && 
+                     resource.data.createdBy == request.auth.uid;
+      
+      // Allow create if user is authenticated and sets themselves as creator
+      allow create: if isSignedIn() && 
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.id is string &&
+                       request.resource.data.mealName is string &&
+                       request.resource.data.createdAt is timestamp;
+      
+      // Allow update only if user owns the meal
+      allow update: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Allow delete only if user owns the meal
+      allow delete: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid;
+    }
+    
+    // ==================== MEASUREMENTS COLLECTION ====================
+    // Users can only access their own measurements
+    match /measurements/{measurementId} {
+      // Allow read if user owns the measurement
+      allow read: if isSignedIn() && 
+                     resource.data.createdBy == request.auth.uid;
+      
+      // Allow create if user is authenticated and sets themselves as creator
+      allow create: if isSignedIn() && 
+                       request.resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.id is string &&
+                       request.resource.data.weight is number &&
+                       request.resource.data.createdAt is timestamp;
+      
+      // Allow update only if user owns the measurement
+      allow update: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid &&
+                       request.resource.data.createdBy == request.auth.uid;
+      
+      // Allow delete only if user owns the measurement
+      allow delete: if isSignedIn() && 
+                       resource.data.createdBy == request.auth.uid;
+    }
+    
+    // ==================== DEFAULT RULE ====================
+    // Deny all other access by default (security by default)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
+
+
